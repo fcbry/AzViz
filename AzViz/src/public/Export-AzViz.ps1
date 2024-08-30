@@ -6,7 +6,7 @@ Short description
 Long description
 
 .PARAMETER ResourceGroup
-Target resource groups 
+Target resource groups
 
 .PARAMETER Show
 Launches visualization image
@@ -36,7 +36,7 @@ Output file path
 Controls how edges appear in visualization, default is 'spline' and other supported values are 'polyline', 'curved', 'ortho', 'line'
 
 .PARAMETER ExcludeTypes
-String array of Azure resource types and providers to exclude from the visualization. 
+String array of Azure resource types and providers to exclude from the visualization.
 Can contain wild cards like: "Microsoft.Network*" or "*network*"
 
 .EXAMPLE
@@ -71,75 +71,83 @@ Author    : https://www.linkedin.com/in/prateeksingh1590
 function Export-AzViz {
     [CmdletBinding()]
     param (
-        # Names of target resource groups 
-        [Parameter(ParameterSetName = 'AzLogin', Mandatory = $true, Position = 0)]
+        # Names of target resource groups
+        # [Parameter(ParameterSetName = 'AzLogin', Mandatory = $true, Position = 0)]
         [string[]] $ResourceGroup,
 
-        # # File paths to target ARM templates
+        # File paths to target ARM templates
         # [Parameter(ParameterSetName = 'FilePath', Mandatory = $true, Position = 0)]
-        # [System.IO.Path[]] $Path,
+        [ValidateScript({
+
+                if (-not (Test-Path $_ -PathType 'Leaf')) {
+                    throw "File not found: $path"
+                }
+
+                $true
+            })]
+        [System.IO.FileInfo]$Path,
 
         # # URLs to target ARM templates
         # [Parameter(ParameterSetName = 'Url', Mandatory = $true, Position = 0)]
         # [uri[]] $Url,
-        
+
         # Launches visualization image
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [switch] $Show,
-        
+
         # Level of information to included in vizualization
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [ValidateSet(1, 2, 3)]
         [int] $LabelVerbosity = 1,
-        
+
         # Level of Azure Resource Sub-category to be included in vizualization
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [ValidateSet(1, 2, 3)]
         [int] $CategoryDepth = 1,
-        
+
         # Output format of the vizualization
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [ValidateSet('png', 'svg')]
         [string] $OutputFormat = 'png',
-        
+
         # Changes the color theme, i.e light or dark
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [ValidateSet('light', 'dark', 'neon')]
         [string] $Theme = 'light',
 
         # Direction in which resource groups are plotted on the visualization
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [ValidateSet('left-to-right', 'top-to-bottom')]
         [string] $Direction = 'top-to-bottom',
 
         # Output file path
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [ValidateScript( { Test-Path -Path $_ -IsValid })]
         [string] $OutputFilePath = (Join-Path ([System.IO.Path]::GetTempPath()) "output.$OutputFormat"),
 
         # Controls how edges appear in visualization
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [ValidateSet('polyline', 'curved', 'ortho', 'line', 'spline')]
         [string] $Splines = 'spline',
 
         # type of resources to be excluded in the visualization
-        [Parameter(ParameterSetName = 'AzLogin')]
+        # [Parameter(ParameterSetName = 'AzLogin')]
         # [Parameter(ParameterSetName = 'FilePath')]
         # [Parameter(ParameterSetName = 'Url')]
         [ValidateNotNullOrEmpty()]
@@ -149,15 +157,15 @@ function Export-AzViz {
 
     try {
 
-        $StartTime =  [datetime]::Now
+        $StartTime = [datetime]::Now
 
         #region defaults
         $ErrorActionPreference = 'stop'
 
-        Get-ASCIIArt             
+        Get-ASCIIArt
 
-        Write-Host ""
-        Write-CustomHost "Testing Graphviz installation..." -Indentation 0 -color Magenta -AddTime
+        Write-Host ''
+        Write-CustomHost 'Testing Graphviz installation...' -Indentation 0 -color Magenta -AddTime
 
         # test graphviz installation
 
@@ -171,13 +179,13 @@ function Export-AzViz {
         }
 
         switch ($Theme) {
-            'light' { 
+            'light' {
                 $VisualizationGraphColor = 'White'
                 $MainGraphBGColor = 'ivory1'
                 $ResourceGroupGraphColor = 'black'
                 $ResourceGroupGraphBGColor = 'ghostwhite'
                 $VNetGraphColor = 'mintcream'
-                $SubnetGraphBGColor = 'whitesmoke'
+                $SubnetGraphBGColor = 'whitesmoke"Loading: "'
                 $SubnetGraphColor = 'black'
                 $GraphFontColor = 'black'
                 $DependencyEdgeColor = 'lightslategrey'
@@ -187,7 +195,7 @@ function Export-AzViz {
                 $NodeFontColor = 'black'
                 break
             }
-            'dark' { 
+            'dark' {
                 $VisualizationGraphColor = 'White'
                 $MainGraphBGColor = 'Black'
                 $ResourceGroupGraphColor = 'white'
@@ -234,16 +242,19 @@ function Export-AzViz {
         }
 
         $rank = @{
-            "Microsoft.Network/publicIPAddresses"     = 1
-            "Microsoft.Network/loadBalancers"         = 2
-            "Microsoft.Network/virtualNetworks"       = 3 
-            "Microsoft.Network/networkSecurityGroups" = 4
-            "Microsoft.Network/networkInterfaces"     = 5
-            "Microsoft.Compute/virtualMachines"       = 6
+            'Microsoft.Network/publicIPAddresses'     = 1
+            'Microsoft.Network/loadBalancers'         = 2
+            'Microsoft.Network/virtualNetworks'       = 3
+            'Microsoft.Network/networkSecurityGroups' = 4
+            'Microsoft.Network/networkInterfaces'     = 5
+            'Microsoft.Compute/virtualMachines'       = 6
         }
 
-        Write-CustomHost "Configuring Defaults..." -Indentation 0 -color Magenta -AddTime
+        Write-CustomHost 'Configuring Defaults...' -Indentation 0 -color Magenta -AddTime
         Write-CustomHost " Target Type            : $TargetType"-Indentation 1 -color Green
+        if ($FilePath) {
+            Write-CustomHost " File Path              : $FilePath"-Indentation 1 -color Green
+        }
         Write-CustomHost " Output Format          : $OutputFormat"-Indentation 1 -color Green
         Write-CustomHost " Exluded Resource Types : $($ExcludeTypes.foreach({"`'$_`'"}))"-Indentation 1 -color Green
         Write-CustomHost " Output File Path       : $OutputFilePath"-Indentation 1 -color Green
@@ -252,20 +263,20 @@ function Export-AzViz {
         Write-CustomHost " Sub-graph Direction    : $Direction"-Indentation 1 -color Green
         Write-CustomHost " Theme                  : $Theme"-Indentation 1 -color Green
         Write-CustomHost " Launch Visualization   : $Show"-Indentation 1 -color Green
-        
+
         switch ($TargetType) {
             'Azure Resource Group' { $Targets = $ResourceGroup }
-            'File' { $Targets = $path }
+            'File' { $Targets = @($path) }
             'Url' { $Targets = $url }
         }
-          
+
         Write-CustomHost "Target ${TargetType}s... " -Indentation 0 -color Magenta -AddTime
-        $Targets.ForEach( { Write-CustomHost $_ -Indentation 1 -color Green } ) 
+        $Targets.ForEach( { Write-CustomHost $_ -Indentation 1 -color Green } )
         #endregion defaults
 
         #region graph-generation
-        Write-CustomHost "Starting to generate Azure visualization..." -Indentation 0 -color Magenta -AddTime
-    
+        Write-CustomHost 'Starting to generate Azure visualization...' -Indentation 0 -color Magenta -AddTime
+
         $graph = ConvertTo-DOTLanguage -TargetType $TargetType -Targets $Targets -CategoryDepth $CategoryDepth -LabelVerbosity $LabelVerbosity -Splines $Splines -ExcludeTypes $ExcludeTypes
 
         if ($graph) {
@@ -274,7 +285,7 @@ strict $graph
 "@ | Export-PSGraph -GraphVizPath $GraphViz.FullName -ShowGraph:$Show -OutputFormat $OutputFormat -DestinationPath $OutputFilePath -OutVariable output |
             Out-Null
             Write-CustomHost "Visualization exported to path: $($output.fullname)" -Indentation 0 -color Magenta -AddTime
-            Write-CustomHost "Finished Azure visualization." -Indentation 0 -color Magenta -AddTime
+            Write-CustomHost 'Finished Azure visualization.' -Indentation 0 -color Magenta -AddTime
         }
         #endregion graph-generation
     }
@@ -283,4 +294,9 @@ strict $graph
     }
 }
 
-Export-ModuleMember Export-AzViz
+try {
+    Export-ModuleMember Export-AzViz
+}
+catch {
+    # This is intended to catch errors caused by sourcing this function directly from the command line
+}

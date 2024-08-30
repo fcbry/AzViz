@@ -1,6 +1,7 @@
-$ProjectRoot = (Get-location).Path
+# $ProjectRoot = (Get-Location).Path
 $Path = (Join-Path $PSScriptRoot 'src')
-Get-Childitem $Path -Filter *.ps1 -Recurse | Foreach-Object {
+Get-ChildItem $Path -Filter *.ps1 -Recurse | ForEach-Object {
+    Write-Host "Loading: $(($_).Fullname)"
     . $_.Fullname
 }
 
